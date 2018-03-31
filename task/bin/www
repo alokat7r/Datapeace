@@ -1,0 +1,129 @@
+#!/usr/bin/env node
+
+// www config file
+'use strict';
+const cluster = require('cluster');
+const numCPUs = require('os').cpus().length;
+
+/** 
+ * Looking for Master Process
+ */
+if (cluster.isMaster) {
+    masterProcess();
+} else {
+    /**
+     * Code to run on each worker process.
+     */
+    var app = require('../app');
+    var debug = require('debug')('task:server');
+    var http = require('http');
+    /**
+     * Get port from environment and store in Express.
+     */
+    var port = normalizePort(process.env.PORT || '3000');
+    app.set('port', port);
+    /**
+     * Create HTTP server.
+     */
+    var server = http.createServer(app);
+    /**
+     * Listen on provided port, on all network interfaces.
+     */
+    server.listen(port);
+    server.on('error', onError);
+    server.on('listening', onListening);
+}
+
+/**
+ * Simple Function to workers and handle event.
+ */
+function masterProcess() {
+    console.log('Master %s is running', process.pid);
+
+    /**
+     * Creating workers in same number as number of cores the running machine is.
+     */
+    for (let i = 0; i < numCPUs; i++) {
+        console.log('Forking process number ... %s.....%s', i, process.pid);
+        /**
+         * cluster.fork() to create worker, which is a based on child process fork() functionality 
+         */
+        cluster.fork();
+    }
+
+    /**
+     * Event Handler which fires everytime a new worker created. 
+     */
+    cluster.on('online', (worker) => {
+        console.log('Worker ' + worker.process.pid + ' is online');
+    });
+
+    /**
+     * Event Handler which fires everytime a worker/process is killed or disconnected.
+     */
+    cluster.on('disconnect', (worker) => {
+        console.log('The worker has disconnected..%s', worker.id);
+        /**
+         * Creating a new worker 
+         */
+        cluster.fork();
+    });
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+    var addr = server.address();
+    var bind = typeof addr === 'string' ?
+        'pipe ' + addr :
+        'port ' + addr.port;
+    debug('Listening on ' + bind);
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+function onError(error) {
+    if (error.syscall !== 'listen') {
+        throw error;
+    }
+
+    var bind = typeof port === 'string' ?
+        'Pipe ' + port :
+        'Port ' + port;
+
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
+}
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+function normalizePort(val) {
+    var port = parseInt(val, 10);
+
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
+
+    if (port >= 0) {
+        // port number
+        return port;
+    }
+
+    return false;
+}
