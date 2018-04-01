@@ -29,6 +29,7 @@ ABOUT FILE HIERARCHY
 * /bin/www <= It is the application entry point! The very first thing this does is require() the "real" application entry point(app.js).
 * app.js <= This file creates an express application object (named app, by convention), sets up the application with various settings and middleware, and then exports the app from the module.
 * /Routes <= This folder contain all the route files which are imported in the app.js file.
+* /db <= This dir contains files related to db schema. 
 * /Views <= The views (templates) are stored in this directory (as specified in app.js) and are given the file extension .jade ( Jade is a markup language which basically optimizes the .html files by removing ceremony).
 
 
