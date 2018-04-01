@@ -32,6 +32,10 @@ if (cluster.isMaster) {
     server.listen(port);
     server.on('error', onError);
     server.on('listening', onListening);
+
+    process.on('uncaughtException', function(err) {
+        process.exit(1);
+    });
 }
 
 /**
@@ -59,10 +63,10 @@ function masterProcess() {
     });
 
     /**
-     * Event Handler which fires everytime a worker/process is killed or disconnected.
+     * Event Handler which fires everytime a worker/process is exit or disconnected.
      */
-    cluster.on('disconnect', (worker) => {
-        console.log('The worker has disconnected..%s', worker.id);
+    cluster.on('exit', (worker) => {
+        console.log('The worker has exit..%s', worker.id);
         /**
          * Creating a new worker 
          */
